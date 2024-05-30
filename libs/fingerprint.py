@@ -16,7 +16,7 @@ IDX_TIME_J = 1
 DEFAULT_FS = 44100
 
 # Size of the FFT window, affects frequency granularity
-DEFAULT_WINDOW_SIZE = 4096
+DEFAULT_WINDOW_SIZE = 1024  # change from 4096 to find more matches
 
 # Ratio by which each sequential window overlaps the last and the
 # next window. Higher overlap will allow a higher granularity of offset
@@ -30,7 +30,7 @@ DEFAULT_FAN_VALUE = 15
 # Minimum amplitude in spectrogram in order to be considered a peak.
 # This can be raised to reduce number of fingerprints, but can negatively
 # affect accuracy.
-DEFAULT_AMP_MIN = 10
+DEFAULT_AMP_MIN = 10 # lower amp to capture more peaks: previously 10
 
 # Number of cells around an amplitude peak in the spectrogram in order
 # for Dejavu to consider it a spectral peak. Higher values mean less
@@ -88,25 +88,27 @@ def fingerprint(channel_samples, Fs=DEFAULT_FS,
       plt.show()
 
     # apply log transform since specgram() returns linear array
+    arr2D[arr2D == 0] = 1e-6  # Replace zeros with a small constant before log
     arr2D = 10 * np.log10(arr2D) # calculates the base 10 logarithm for all elements of arr2D
     arr2D[arr2D == -np.inf] = 0  # replace infs with zeros
 
     # find local maxima
     local_maxima = get_2D_peaks(arr2D, plot=plots, amp_min=amp_min)
+    local_maxima_list = list(local_maxima)
 
     msg = '   local_maxima: %d of frequency & time pairs'
-    print colored(msg, attrs=['dark']) % len(local_maxima)
 
     # return hashes
-    return generate_hashes(local_maxima, fan_value=fan_value)
+    return generate_hashes(local_maxima_list, fan_value=fan_value)
 
 def get_2D_peaks(arr2D, plot=False, amp_min=DEFAULT_AMP_MIN):
     # http://docs.scipy.org/doc/scipy/reference/generated/scipy.ndimage.morphology.iterate_structure.html#scipy.ndimage.morphology.iterate_structure
     struct = generate_binary_structure(2, 1)
     neighborhood = iterate_structure(struct, PEAK_NEIGHBORHOOD_SIZE)
 
-    # find local maxima using our fliter shape
+    # find local maxima using our filter shape
     local_max = maximum_filter(arr2D, footprint=neighborhood) == arr2D
+
     background = (arr2D == 0)
     eroded_background = binary_erosion(background, structure=neighborhood,
                                        border_value=1)
@@ -137,7 +139,6 @@ def get_2D_peaks(arr2D, plot=False, amp_min=DEFAULT_AMP_MIN):
       ax.set_title("Spectrogram")
       plt.gca().invert_yaxis()
       plt.show()
-
     return zip(frequency_idx, time_idx)
 
 # Hash list structure: sha1_hash[0:20] time_offset
@@ -164,5 +165,8 @@ def generate_hashes(peaks, fan_value=DEFAULT_FAN_VALUE):
 
           # check if delta is between min & max
           if t_delta >= MIN_HASH_TIME_DELTA and t_delta <= MAX_HASH_TIME_DELTA:
-            h = hashlib.sha1("%s|%s|%s" % (str(freq1), str(freq2), str(t_delta)))
+            h = hashlib.sha1('{}|{}|{}'.format(
+                    str(freq1),
+                    str(freq2),
+                    str(t_delta)).encode())
             yield (h.hexdigest()[0:FINGERPRINT_REDUCTION], t1)

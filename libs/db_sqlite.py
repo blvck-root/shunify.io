@@ -70,7 +70,7 @@ class SqliteDatabase(Database):
 
     query = "INSERT INTO songs (%s) VALUES (?, ?)" % (keys);
 
-    self.cur.execute(query, values)
+    self.cur.execute(query, list(values))
     self.conn.commit()
 
     return self.cur.lastrowid
@@ -79,7 +79,7 @@ class SqliteDatabase(Database):
     def grouper(iterable, n, fillvalue=None):
       args = [iter(iterable)] * n
       return (filter(None, values) for values
-          in izip_longest(fillvalue=fillvalue, *args))
+          in zip_longest(fillvalue=fillvalue, *args))
 
     for split_values in grouper(values, 1000):
       query = "INSERT OR IGNORE INTO %s (%s) VALUES (?, ?, ?)" % (table, ", ".join(columns))

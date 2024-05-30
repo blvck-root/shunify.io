@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 import os
 import sys
 import libs
@@ -6,7 +6,7 @@ import libs.fingerprint as fingerprint
 import argparse
 
 from argparse import RawTextHelpFormatter
-from itertools import izip_longest
+from itertools import zip_longest
 from termcolor import colored
 from libs.config import get_config
 from libs.reader_microphone import MicrophoneReader
@@ -31,7 +31,7 @@ if __name__ == '__main__':
   seconds = int(args.seconds)
 
   chunksize = 2**12  # 4096
-  channels = 2#int(config['channels']) # 1=mono, 2=stereo
+  channels = 2  #int(config['channels']) # 1=mono, 2=stereo
 
   record_forever = False
   visualise_console = bool(config['mic.visualise_console'])
@@ -44,7 +44,7 @@ if __name__ == '__main__':
     channels=channels)
 
   msg = ' * started recording..'
-  print colored(msg, attrs=['dark'])
+  print(colored(msg, attrs=['dark']))
 
   while True:
     bufferSize = int(reader.rate / reader.chunksize * seconds)
@@ -54,10 +54,10 @@ if __name__ == '__main__':
 
       if visualise_console:
         msg = colored('   %05d', attrs=['dark']) + colored(' %s', 'green')
-        print msg  % visual_peak.calc(nums)
+        print(msg  % visual_peak.calc)(nums)
       else:
         msg = '   processing %d of %d..' % (i, bufferSize)
-        print colored(msg, attrs=['dark'])
+        print(colored(msg, attrs=['dark']))
 
     if not record_forever: break
 
@@ -68,20 +68,18 @@ if __name__ == '__main__':
   reader.stop_recording()
 
   msg = ' * recording has been stopped'
-  print colored(msg, attrs=['dark'])
-
+  print(colored(msg, attrs=['dark']))
 
 
   def grouper(iterable, n, fillvalue=None):
     args = [iter(iterable)] * n
     return (filter(None, values) for values
-            in izip_longest(fillvalue=fillvalue, *args))
+            in zip_longest(fillvalue=fillvalue, *args))
 
   data = reader.get_recorded_data()
 
-  msg = ' * recorded %d samples'
-  print colored(msg, attrs=['dark']) % len(data[0])
-
+  msg = ' * recorded {} samples'.format(len(data[0]))
+  print(colored(msg, attrs=['dark']))
   # reader.save_recorded('test.wav')
 
 
@@ -102,7 +100,7 @@ if __name__ == '__main__':
     values = mapper.keys()
 
     for split_values in grouper(values, 1000):
-      # @todo move to db related files
+      # TODO: move to db related files
       query = """
         SELECT upper(hash), song_fk, offset
         FROM fingerprints
@@ -114,18 +112,12 @@ if __name__ == '__main__':
       matches_found = len(x)
 
       if matches_found > 0:
-        msg = '   ** found %d hash matches (step %d/%d)'
-        print colored(msg, 'green') % (
-          matches_found,
-          len(split_values),
-          len(values)
-        )
+        msg = '   ** found {} hash matches (step {}/{})'.format(matches_found, len(split_values), len(values))
+        print(colored(msg, 'green'))
+
       else:
-        msg = '   ** not matches found (step %d/%d)'
-        print colored(msg, 'red') % (
-          len(split_values),
-          len(values)
-        )
+        msg = '   ** not matches found (step %d/%d)'.format(len(split_values), len(values))
+        print(colored(msg, 'red'))
 
       for hash, sid, offset in x:
         # (sid, db_offset - song_sampled_offset)
@@ -133,15 +125,13 @@ if __name__ == '__main__':
 
   for channeln, channel in enumerate(data):
     # TODO: Remove prints or change them into optional logging.
-    msg = '   fingerprinting channel %d/%d'
-    print colored(msg, attrs=['dark']) % (channeln+1, channel_amount)
+    msg = '   fingerprinting channel {}/{}'.format(channeln + 1, channel_amount)
+    print(colored(msg, attrs=['dark']))
 
     matches.extend(find_matches(channel))
 
-    msg = '   finished channel %d/%d, got %d hashes'
-    print colored(msg, attrs=['dark']) % (
-      channeln+1, channel_amount, len(matches)
-    )
+    msg = '   finished channel {}/{}, got {} hashes'.format(channeln + 1, channel_amount, len(matches))
+    print(colored(msg, attrs=['dark']))
 
   def align_matches(matches):
     diff_counter = {}
@@ -181,23 +171,19 @@ if __name__ == '__main__':
 
   total_matches_found = len(matches)
 
-  print ''
+  print('')
 
   if total_matches_found > 0:
-    msg = ' ** totally found %d hash matches'
-    print colored(msg, 'green') % total_matches_found
+    msg = ' ** totally found {} hash matches'.format(total_matches_found)
+    print(colored(msg, 'green'))
 
     song = align_matches(matches)
 
-    msg = ' => song: %s (id=%d)\n'
-    msg += '    offset: %d (%d secs)\n'
-    msg += '    confidence: %d'
+    msg = ' => song: {} (id={})\n'.format(song['SONG_NAME'], song['SONG_ID'])
+    msg += '    offset: {} ({} secs)\n'.format(song['OFFSET'], song['OFFSET_SECS'])
+    msg += '    confidence: {}'.format(song['CONFIDENCE'])
 
-    print colored(msg, 'green') % (
-      song['SONG_NAME'], song['SONG_ID'],
-      song['OFFSET'], song['OFFSET_SECS'],
-      song['CONFIDENCE']
-    )
+    print(colored(msg, 'green'))
   else:
     msg = ' ** not matches found at all'
-    print colored(msg, 'red')
+    print(colored(msg, 'red'))

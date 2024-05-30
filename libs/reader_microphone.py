@@ -1,7 +1,7 @@
 import pyaudio
 import numpy
 import wave
-from reader import BaseReader
+from libs.reader import BaseReader
 
 class MicrophoneReader(BaseReader):
   default_chunksize = 8192
