@@ -7,19 +7,19 @@ clean:
 	@find . -name \*.pyc -delete
 
 reset:
-	@python reset-database.py
+	@python resetdb.py
 
 tests:
 	@python tests/*.py
 
-stat:
-	@python get-database-stat.py
+stats:
+	@python getstats.py
 
 fingerprint-songs: clean
-	@python collect-fingerprints-of-songs.py
+	@python collect_fingerprints.py
 
 recognize-listen: clean
-	@python recognize-from-microphone.py -s $(seconds)
+	@python identify_mic.py -s $(seconds)
 
 recognize-file: clean
-	@python recognize-from-file.py
+	@python identify_file.py -f $(file)

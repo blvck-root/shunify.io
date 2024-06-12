@@ -13,7 +13,6 @@ from libs.reader_microphone import MicrophoneReader
 from libs.visualiser_console import VisualiserConsole as visual_peak
 from libs.visualiser_plot import VisualiserPlot as visual_plot
 from libs.db_sqlite import SqliteDatabase
-# from libs.db_mongo import MongoDatabase
 
 if __name__ == '__main__':
   config = get_config()
